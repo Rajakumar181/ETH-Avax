@@ -1,19 +1,50 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.26;
 
-contract ownerAccess{
+contract Ether {
+    event Receive(address indexed sender, uint256 amount);
+    event Withdraw(address indexed to, uint256 amount);
+
     address public owner;
-    constructor(){
-        owner=msg.sender;
-    }
-    modifier onlyOwner(){
-        require (owner==msg.sender,"only owner can access");
+
+    modifier OwnerOnly() {
+        require(msg.sender == owner, "Not the owner.");
         _;
     }
-    function addition(uint256 u, uint256 v)public view onlyOwner returns(uint256){
-        return u+v;
+
+    constructor() {
+        owner = msg.sender;
     }
-    function subtraction(uint256 w,uint x) public view onlyOwner returns(uint256){
-        return w-x;
+
+    // Fallback function to handle unrecognized calls and receive Ether
+    fallback() external payable {
+        emit Receive(msg.sender, msg.value);
+    }
+
+    // Function to receive Ether
+    receive() external payable {
+        emit Receive(msg.sender, msg.value);
+    }
+
+    // Function to withdraw Ether from the contract
+    function withdraw(uint256 _amount) public OwnerOnly {
+        require(address(this).balance >= _amount, "Insufficient balance");
+        payable(owner).transfer(_amount);
+        emit Withdraw(owner, _amount);
+    }
+
+    // Function to check the contract's balance
+    function getBalance() public view returns (uint256) {
+        return address(this).balance;
+    }
+
+    // Function to demonstrate revert
+    function demoRevert() public pure {
+        revert("This function always reverts");
+    }
+
+    // Function to demonstrate assert
+    function demoAssert() public view {
+        assert(address(this).balance >= 0); // This should always be true
     }
 }
